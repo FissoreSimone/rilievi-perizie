@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rilievi e Perizie</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script src="libreria.js" defer></script>
+
+    <script src="login.js" defer></script>
+    <style>
+      body {
+        background: linear-gradient(135deg, #1e1e2f, #252540);
+        color: #ffffff;
+        font-family: "Arial", sans-serif;
+        animation: fadeIn 1s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .card {
+        background-color: #2c2c3e;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        animation: slideIn 1s ease-in-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      h2, label {
+    color: #ffffff; /* Imposta il colore del testo su bianco */
+  }
+
+      .btn-primary {
+        background-color: #4a90e2;
+        border: none;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        background-color: #357ab8;
+      }
+
+      .btn-google {
+        background-color: #db4437;
+        color: #ffffff;
+        border: none;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn-google:hover {
+        background-color: #a33627;
+      }
+
+      #errorMessage {
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body class="d-flex justify-content-center align-items-center vh-100">
+    <div class="container text-center">
+      <h1 class="mb-4 text-light">Rilievi e Perizie</h1>
+      <div class="card shadow-sm p-4" style="max-width: 400px; margin: auto">
+        <h2 class="mb-3">Login</h2>
+        <form id="loginForm">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              placeholder="Inserisci la tua email"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              placeholder="Inserisci la tua password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mb-3">
+            Login
+          </button>
+        </form>
+        <button id="googleLogin" class="btn btn-google w-100">
+          <i class="bi bi-google"></i> Accedi con Google
+        </button>
+        <p id="errorMessage" class="text-danger mt-3"></p>
+      </div>
+    </div>
+
+    <script>
+      // Google Login Integration
+      function handleCredentialResponse(response) {
+        console.log("Google ID Token:", response.credential);
+        // Send the token to the server for verification
+      }
+
+      window.onload = function () {
+        google.accounts.id.initialize({
+          client_id: "YOUR_GOOGLE_CLIENT_ID",
+          callback: handleCredentialResponse,
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("googleLogin"),
+          { theme: "outline", size: "large" } // Customization options
+        );
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
