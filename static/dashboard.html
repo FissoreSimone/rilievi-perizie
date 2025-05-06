@@ -13,109 +13,180 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <!--<link rel="stylesheet" href="style.css" />-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-      body {
-        background: linear-gradient(135deg, #1e1e2f, #252540);
-        color: #ffffff;
-        font-family: "Arial", sans-serif;
-      }
-
-      .offcanvas {
-        background-color: #2c2c3e;
-        color: #ffffff;
-      }
-
-      .btn-menu {
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 1.2rem;
-      }
-
-      .hidden-section {
-        display: none;
-      }
-
-      #map {
-        width: 100%;
-        height: 400px;
-        border-radius: 15px;
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-      }
-    </style>
+    <script src="dashboard.js" defer></script>
+    <script src="cambia-password.js" defer></script>
+    <script src="libreria.js"></script>
   </head>
-  <body>
-    <!-- Menu a scomparsa -->
-    <button
-      class="btn btn-primary position-fixed top-0 start-0 m-3"
-      type="button"
-      data-bs-toggle="offcanvas"
-      data-bs-target="#menu"
-      aria-controls="menu"
-    >
-      Menu
-    </button>
 
-    <div
-      class="offcanvas offcanvas-start"
-      tabindex="-1"
-      id="menu"
-      aria-labelledby="menuLabel"
+  <style>
+    .offcanvas {
+    background-color: #1e1e2f; /* Sfondo scuro */
+    color: #ffffff; /* Testo bianco */
+  }
+
+  .offcanvas-header {
+    border-bottom: 1px solid #4a90e2; /* Linea divisoria blu */
+  }
+
+  .btn-dashboard {
+    background-color: #4a90e2; /* Blu acceso */
+    color: #ffffff; /* Testo bianco */
+    border: none;
+    width: 100%; /* Pulsanti a larghezza piena */
+    padding: 15px;
+    font-size: 1.2rem;
+    text-align: center;
+    border-radius: 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-bottom: 10px; /* Spaziatura tra i pulsanti */
+  }
+
+  .btn-dashboard:hover {
+    background-color: #357ab8; /* Blu più scuro */
+    transform: scale(1.05); /* Leggero ingrandimento al passaggio del mouse */
+  }
+
+  .btn-dashboard:focus {
+    outline: none;
+    box-shadow: 0 0 10px #4a90e2; /* Effetto focus */
+  }
+
+  .btn-menu {
+    display: block; /* Disposizione verticale */
+  }
+    body {
+      background: linear-gradient(135deg, #1e1e2f, #252540);
+      color: #ffffff;
+      font-family: "Arial", sans-serif;
+      animation: fadeIn 1s ease-in-out;
+    }
+    h2, label {
+    color: #ffffff; /* Imposta il colore del testo su bianco */
+  }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .card {
+      background-color: #2c2c3e;
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      animation: slideIn 1s ease-in-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .btn-primary {
+      background-color: #4a90e2;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #357ab8;
+    }
+
+    .btn-danger {
+      background-color: #db4437;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-danger:hover {
+      background-color: #a33627;
+    }
+
+    .btn-warning {
+      background-color: #f4b400;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-warning:hover {
+      background-color: #c49000;
+    }
+
+    #map {
+      border-radius: 15px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu a scomparsa -->
+  <button
+  class="btn btn-primary position-fixed top-0 start-0 m-3"
+  type="button"
+  data-bs-toggle="offcanvas"
+  data-bs-target="#menu"
+  aria-controls="menu"
+>
+  Menu
+</button>
+
+<div
+  class="offcanvas offcanvas-start"
+  tabindex="-1"
+  id="menu"
+  aria-labelledby="menuLabel"
+>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="menuLabel">Menu</h5>
+    <button
+      type="button"
+      class="btn-close text-reset"
+      data-bs-dismiss="offcanvas"
+      aria-label="Close"
+    ></button>
+  </div>
+  <div class="offcanvas-body">
+    <button
+      class="btn btn-dashboard btn-menu mb-3"
+      onclick="showSection('perizie')"
     >
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="menuLabel">Menu</h5>
-        <button
-          type="button"
-          class="btn-close text-reset"
-          data-bs-dismiss="offcanvas"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="offcanvas-body">
-        <button
-          class="btn btn-primary btn-menu"
-          onclick="showSection('perizie')"
-        >
-          Perizie
-        </button>
-        <button
-          class="btn btn-primary btn-menu"
-          onclick="showSection('nuovoUtente')"
-        >
-          Nuovo Utente
-        </button>
-        <button
-          class="btn btn-primary btn-menu"
-          onclick="showSection('cambiaPassword')"
-        >
-          Cambia Password
-        </button>
-      </div>
+      Perizie
+    </button>
+    <button
+      class="btn btn-dashboard btn-menu mb-3"
+      onclick="showSection('nuovoUtente')"
+    >
+      Nuovo Utente
+    </button>
+    <button
+      class="btn btn-dashboard btn-menu"
+      onclick="showSection('cambiaPassword')"
+    >
+      Cambia Password
+    </button>
+  </div>
+</div>
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <h1 class="text-light">Dashboard - Gestione Perizie</h1>
+      <button id="logout" class="btn btn-danger mt-3">Logout</button>
     </div>
 
-    <!-- Contenuto -->
-    <div class="container py-5">
-      <!-- Sezione Perizie -->
-      <div id="perizieSection">
-        <div class="card shadow-sm">
-          <div class="card-header bg-secondary text-white">
-            <h2 class="h5">Mappa delle Perizie</h2>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label for="userFilter" class="form-label">Filtra per utente:</label>
-              <select id="userFilter" class="form-select">
-                <option value="ALL">Tutti</option>
-              </select>
-            </div>
-            <div id="map"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sezione Nuovo Utente -->
-      <div id="nuovoUtenteSection" class="hidden-section">
+    <div class="row g-4">
+      <!-- Sezione Crea Utente -->
+      <div id="nuovoUtenteSection" >
         <div class="card shadow-sm">
           <div class="card-header bg-primary text-white">
             <h2 class="h5">Crea un nuovo utente</h2>
@@ -178,8 +249,29 @@
         </div>
       </div>
 
+      <!-- Mappa -->
+      <div id="perizieSection">
+        <div class="card shadow-sm">
+          <div class="card-header bg-secondary text-white">
+            <h2 class="h5">Mappa delle Perizie</h2>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="userFilter" class="form-label">Filtra per utente:</label>
+              <select id="userFilter" class="form-select">
+                <option value="ALL">Tutti</option>
+              </select>
+            </div>
+            <div
+              id="map"
+              style="width: 100%; height: 550px;"
+            ></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Sezione Cambia Password -->
-      <div id="cambiaPasswordSection" class="hidden-section">
+      <div id="cambiaPasswordSection">
         <div class="card shadow-sm">
           <div class="card-header bg-warning text-white">
             <h2 class="h5">Cambia Password</h2>
@@ -224,26 +316,7 @@
         </div>
       </div>
     </div>
-
-    <script>
-      function showSection(section) {
-        // Nascondi tutte le sezioni
-        document.getElementById("perizieSection").style.display = "none";
-        document.getElementById("nuovoUtenteSection").style.display = "none";
-        document.getElementById("cambiaPasswordSection").style.display = "none";
-
-        // Mostra la sezione selezionata
-        if (section === "perizie") {
-          document.getElementById("perizieSection").style.display = "block";
-        } else if (section === "nuovoUtente") {
-          document.getElementById("nuovoUtenteSection").style.display = "block";
-        } else if (section === "cambiaPassword") {
-          document.getElementById("cambiaPasswordSection").style.display = "block";
-        }
-      }
-
-      // Mostra la sezione "Perizie" all'avvio
-      showSection("perizie");
-    </script>
-  </body>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

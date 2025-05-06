@@ -1,8 +1,35 @@
 "use strict";
 
 $(document).ready(function () {
+  // Sezioni della dashboard
+  let perizieSection = $("#perizieSection");
+  let cambiaPasswordSection = $("#cambiaPasswordSection").hide();
+  let createUserSection = $("#nuovoUtenteSection").hide();
   let map;
-  getUtenti();
+
+  // Funzione per mostrare la sezione selezionata
+  function showSection(section) {
+    if (section === "perizie") {
+      perizieSection.show();
+      cambiaPasswordSection.hide();
+      createUserSection.hide();
+    } else if (section === "nuovoUtente") {
+      perizieSection.hide();
+      cambiaPasswordSection.hide();
+      createUserSection.show();
+    } else if (section === "cambiaPassword") {
+      perizieSection.hide();
+      cambiaPasswordSection.show();
+      createUserSection.hide();
+    }
+  }
+
+  // Nasconde il menu offcanvas se aperto
+  const offcanvasElement = document.querySelector("#menu");
+  const offcanvasInstance = bootstrap.Offcanvas.getInstance(offcanvasElement);
+  if (offcanvasInstance) offcanvasInstance.hide();
+
+  window.showSection = showSection;
 
   // Logout
   $("#logout").on("click", function () {
@@ -10,7 +37,7 @@ $(document).ready(function () {
     window.location.href = "/index.html";
   });
 
-  // Sezione Cambia Password
+  // Gestione del cambio password
   $("#changePasswordForm").on("submit", async function (e) {
     e.preventDefault();
 
@@ -44,7 +71,6 @@ $(document).ready(function () {
   // Funzione per ottenere le coordinate di un indirizzo
   async function getCoordinates(uriAddress) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${uriAddress}`;
-
     const httpResponse = await inviaRichiesta("GET", url);
 
     if (httpResponse.data.length > 0) {
@@ -57,7 +83,7 @@ $(document).ready(function () {
     }
   }
 
-  // Inizializzazione della mappa con MapLibre
+  // Inizializzazione della mappa
   async function initializeMap() {
     const address = "Via San Michele 68, Fossano, Italia";
     const uriAddress = encodeURIComponent(address);
@@ -71,45 +97,31 @@ $(document).ready(function () {
       return;
     }
 
-    console.log("Coordinate:", coords);
-    const lat = coords.lat;
-    const lng = coords.lng;
-    const zoom = 15.95;
-
-    const style = {
-      version: 8,
-      sources: {
-        osm: {
-          type: "raster",
-          tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-          tileSize: 256,
-          maxzoom: 19,
-          minzoom: 11,
-        },
-      },
-      layers: [
-        {
-          id: "osm",
-          type: "raster",
-          source: "osm",
-        },
-      ],
-    };
-
     const mapOptions = {
       container: "map",
-      style: style,
-      center: [lng, lat],
-      zoom: zoom,
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: "raster",
+            tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tileSize: 256,
+            maxzoom: 19,
+            minzoom: 11,
+          },
+        },
+        layers: [{ id: "osm", type: "raster", source: "osm" }],
+      },
+      center: [coords.lng, coords.lat],
+      zoom: 15.95,
     };
 
     map = new maplibregl.Map(mapOptions);
     map.addControl(new maplibregl.NavigationControl());
-    const scaleOptions = { maxWidth: 80, unit: "metric" };
-    map.addControl(new maplibregl.ScaleControl(scaleOptions));
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: "metric" }));
 
-    const sedeCentraleMarker = new maplibregl.Marker({ color: "red" })
-      .setLngLat([lng, lat])
+    new maplibregl.Marker({ color: "red" })
+      .setLngLat([coords.lng, coords.lat])
       .setPopup(new maplibregl.Popup().setHTML("<h4>Sede Centrale</h4>"))
       .addTo(map);
 
@@ -120,19 +132,14 @@ $(document).ready(function () {
   async function loadMarkers(map) {
     try {
       const response = await inviaRichiesta("GET", "/api/getPerizie");
-      console.log("Risposta API:", response);
-
       const perizie = response.data;
 
       if (!Array.isArray(perizie)) {
-        console.error("La risposta non è un array:", perizie);
         alert("Errore: La risposta del server non è valida.");
         return;
       }
 
-      if (window.markers) {
-        window.markers.forEach((marker) => marker.remove());
-      }
+      if (window.markers) window.markers.forEach((marker) => marker.remove());
       window.markers = [];
 
       perizie.forEach((perizia) => {
@@ -146,44 +153,38 @@ $(document).ready(function () {
         window.markers.push(marker);
       });
     } catch (err) {
-      console.error("Errore durante il caricamento delle perizie:", err);
       alert("Errore durante il caricamento delle perizie.");
     }
   }
+
   // Funzione per creare il contenuto del popup
   function createPopupContent(perizia) {
     const { codice_perizia, descrizione, fotografie } = perizia;
-
     let content = `
-    <div>
+      <div>
         <h4>Perizia: ${codice_perizia}</h4>
-        <h5>Modifica descrizione:</h5>
-        <textarea id="descrizione" style="width: 100%; margin-bottom: 10px;">${descrizione}</textarea>
-        <h5>Fotografie:</h5>
+        <textarea id="descrizione">${descrizione}</textarea>
         <ul>
     `;
-
     fotografie.forEach((foto, index) => {
       content += `
         <li>
-            <img src="${foto.url}" alt="Foto" style="width: 100px; height: auto;" />
-            <textarea id="commento-${index}" style="width: 100%; margin-top: 5px;">${foto.commento}</textarea>
+          <img src="${foto.url}" alt="Foto" />
+          <textarea id="commento-${index}">${foto.commento}</textarea>
         </li>
-        `;
+      `;
     });
-
     content += `
         </ul>
-        <button id="salvaModifiche" 
-            data-codice="${codice_perizia}" 
-            data-fotografie='${JSON.stringify(fotografie)}'>
-            Salva Modifiche
-        </button>
-    </div>
+        <button id="salvaModifiche" data-codice="${codice_perizia}" data-fotografie='${JSON.stringify(
+      fotografie
+    )}'>Salva Modifiche</button>
+      </div>
     `;
-
     return content;
   }
+
+  // Gestione del salvataggio delle modifiche
   $(document).on("click", "#salvaModifiche", async function () {
     const codicePerizia = $(this).data("codice");
     const fotografie = $(this).data("fotografie");
@@ -212,25 +213,19 @@ $(document).ready(function () {
             commento: commento,
           })),
         },
-        {
-          Authorization: `Bearer ${token}`,
-        }
+        { Authorization: `Bearer ${token}` }
       );
 
       if (response.status === 200) {
         alert("Modifiche salvate con successo!");
-
         loadMarkers(map);
       } else {
         alert("Errore durante il salvataggio delle modifiche.");
       }
     } catch (err) {
-      console.error("Errore durante il salvataggio delle modifiche:", err);
       alert("Errore durante il salvataggio delle modifiche. Riprova.");
     }
   });
-
-  initializeMap();
 
   // Gestione del form "Crea Utente"
   $("#createUserForm").on("submit", async function (event) {
@@ -255,19 +250,11 @@ $(document).ready(function () {
         return;
       }
 
-      let response = await inviaRichiesta(
+      const response = await inviaRichiesta(
         "POST",
         "/api/createUser",
-        {
-          nome,
-          cognome,
-          email,
-          telefono,
-          ruolo,
-        },
-        {
-          Authorization: `Bearer ${token}`,
-        }
+        { nome, cognome, email, telefono, ruolo },
+        { Authorization: `Bearer ${token}` }
       );
 
       if (response.status === 201) {
@@ -279,7 +266,6 @@ $(document).ready(function () {
         alert("Errore: " + response.err);
       }
     } catch (err) {
-      console.error("Errore durante la creazione dell'utente:", err);
       alert("Errore durante la creazione dell'utente. Riprova.");
     }
   });
@@ -288,71 +274,43 @@ $(document).ready(function () {
   async function getUtenti() {
     try {
       const response = await inviaRichiesta("GET", "/api/getUtenti");
-      console.log("Utenti caricati:", response);
-
       const userFilter = $("#userFilter");
       userFilter.empty();
       userFilter.append(new Option("Tutti", "ALL"));
 
       response.data.forEach((utente) => {
-        if (/Admin/i.test(utente.nome)) {
-          console.log("Utente escluso dal filtro:", utente);
-          return;
-        }
-
-        userFilter.append(
-          new Option(`${utente.nome} ${utente.cognome}`, utente._id)
-        );
+        if (/Admin/i.test(utente.nome)) return;
+        userFilter.append(new Option(`${utente.nome} ${utente.cognome}`, utente._id));
       });
 
       userFilter.on("change", async function () {
         let selectedUserId = $(this).val();
-        console.log("Utente selezionato:", selectedUserId);
-
-        if (!selectedUserId || selectedUserId === "ALL") {
-          selectedUserId = "ALL";
-        }
-
-        selectedUserId = selectedUserId.trim();
+        if (!selectedUserId || selectedUserId === "ALL") selectedUserId = "ALL";
 
         try {
           const perizieResponse = await inviaRichiesta(
             "GET",
             `/api/getPerizie?userId=${selectedUserId}`
           );
-          console.log("Perizie caricate:", perizieResponse);
-
-          if (perizieResponse.data) {
-            updateMarkers(perizieResponse.data);
-          } else {
-            console.warn("Nessuna perizia trovata.");
-            updateMarkers([]);
-          }
+          if (perizieResponse.data) updateMarkers(perizieResponse.data);
+          else updateMarkers([]);
         } catch (err) {
-          console.error("Errore durante il caricamento delle perizie:", err);
           alert("Errore durante il caricamento delle perizie.");
         }
       });
     } catch (err) {
-      console.error("Errore durante il caricamento degli utenti:", err);
       alert("Errore durante il caricamento degli utenti.");
     }
   }
 
   // Funzione per aggiornare i marker sulla mappa
   function updateMarkers(perizie) {
-    if (window.markers) {
-      window.markers.forEach((marker) => marker.remove());
-    }
+    if (window.markers) window.markers.forEach((marker) => marker.remove());
     window.markers = [];
 
     perizie.forEach((perizia) => {
       const { coordinate } = perizia;
-
-      if (!coordinate || !coordinate.latitudine || !coordinate.longitudine) {
-        console.warn("Perizia con coordinate non valide:", perizia);
-        return;
-      }
+      if (!coordinate || !coordinate.latitudine || !coordinate.longitudine) return;
 
       const marker = new maplibregl.Marker()
         .setLngLat([coordinate.longitudine, coordinate.latitudine])
@@ -362,4 +320,7 @@ $(document).ready(function () {
       window.markers.push(marker);
     });
   }
+
+  initializeMap();
+  getUtenti();
 });
