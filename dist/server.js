@@ -32,7 +32,10 @@ dotenv_1.default.config({ path: ".env" });
 const app = (0, express_1.default)();
 const HTTP_PORT = process.env.PORT || 3000;
 const DBNAME = process.env.DBNAME;
-const CONNECTION_STRING = process.env.MONGODB_URI;
+const CONNECTION_STRING = process.env.MONGODB_URI || "";
+if (!CONNECTION_STRING) {
+    throw new Error("CONNECTION_STRING is not defined in the environment variables.");
+}
 const JWT_SECRET = process.env.JWT_SECRET;
 console.log("Nome del database:", DBNAME);
 function testConnection() {
@@ -207,7 +210,7 @@ app.post("/api/login", (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (!isPasswordValid) {
             return res.status(401).send("Password errata.");
         }
-        const token = jsonwebtoken_1.default.sign({ id: user._id, nome: user.nome, cognome: user.cognome, email: user.email, ruolo: user.ruolo }, JWT_SECRET, { expiresIn: "10s" });
+        const token = jsonwebtoken_1.default.sign({ id: user._id, nome: user.nome, cognome: user.cognome, email: user.email, ruolo: user.ruolo }, JWT_SECRET || (() => { throw new Error("JWT_SECRET is not defined in the environment variables."); })(), { expiresIn: "24h" });
         if (!user.firstLoginCompleted) {
             return res.status(200).json({
                 token,
@@ -291,6 +294,9 @@ app.post("/api/cambia-password", (req, res) => __awaiter(void 0, void 0, void 0,
         return res.status(400).send("Tutti i campi sono obbligatori.");
     }
     try {
+        if (!JWT_SECRET) {
+            throw new Error("JWT_SECRET is not defined in the environment variables.");
+        }
         const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
         console.log("Token decodificato:", decoded);
         const client = new mongodb_1.MongoClient(CONNECTION_STRING);
@@ -338,7 +344,11 @@ app.post("/api/upload-perizia", (req, res) => __awaiter(void 0, void 0, void 0, 
         return res.status(400).send("Tutti i campi sono obbligatori.");
     }
     try {
+        if (!JWT_SECRET) {
+            throw new Error("JWT_SECRET is not defined in the environment variables.");
+        }
         const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+        console.log("Token decodificato:", decoded);
         const client = new mongodb_1.MongoClient(CONNECTION_STRING);
         yield client.connect();
         const collection = client.db(DBNAME).collection("perizie");
@@ -391,6 +401,12 @@ app.use("/", function (req, res, next) {
     }
     else
         res.send(paginaErrore);
+});
+app.use((err, req, res, next) => {
+    if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Il token è scaduto. Effettua nuovamente il login." });
+    }
+    next(err);
 });
 app.use("/", (err, req, res, next) => {
     res.status(500);

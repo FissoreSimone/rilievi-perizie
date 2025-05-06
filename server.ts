@@ -383,6 +383,8 @@ app.post("/api/upload-perizia", async (req: Request, res: Response) => {
       throw new Error("JWT_SECRET is not defined in the environment variables.");
     }
     const decoded = jwt.verify(token, JWT_SECRET) as unknown as { id: string };
+    console.log("Token decodificato:", decoded);
+
 
     const client = new MongoClient(CONNECTION_STRING);
     await client.connect();
@@ -440,6 +442,12 @@ app.use("/", function (req: any, res: any, next: NextFunction) {
   } else res.send(paginaErrore);
 });
 
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.name === "TokenExpiredError") {
+    return res.status(401).json({ message: "Il token è scaduto. Effettua nuovamente il login." });
+  }
+  next(err);
+});
 app.use("/", (err: any, req: any, res: any, next: any) => {
   res.status(500);
   res.send("ERRR: " + err.message);
