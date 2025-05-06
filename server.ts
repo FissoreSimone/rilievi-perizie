@@ -24,7 +24,10 @@ dotenv.config({ path: ".env" });
 const app = express();
 const HTTP_PORT = process.env.PORT || 3000;
 const DBNAME = process.env.DBNAME;
-const CONNECTION_STRING = process.env.MONGODB_URI;
+const CONNECTION_STRING = process.env.MONGODB_URI || "";
+if (!CONNECTION_STRING) {
+  throw new Error("CONNECTION_STRING is not defined in the environment variables.");
+}
 const JWT_SECRET = process.env.JWT_SECRET;
 
 console.log("Nome del database:", DBNAME);
@@ -222,7 +225,7 @@ app.post("/api/login", async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { id: user._id, nome: user.nome, cognome: user.cognome, email: user.email, ruolo: user.ruolo },
-      JWT_SECRET,
+      JWT_SECRET || (() => { throw new Error("JWT_SECRET is not defined in the environment variables."); })(),
       { expiresIn: "24h" }
     );
 
@@ -317,7 +320,10 @@ app.post("/api/cambia-password", async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    if (!JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined in the environment variables.");
+    }
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as { id: string };
     console.log("Token decodificato:", decoded);
 
     const client = new MongoClient(CONNECTION_STRING);
@@ -373,7 +379,10 @@ app.post("/api/upload-perizia", async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    if (!JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined in the environment variables.");
+    }
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as { id: string };
 
     const client = new MongoClient(CONNECTION_STRING);
     await client.connect();
