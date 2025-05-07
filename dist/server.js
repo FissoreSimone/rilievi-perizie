@@ -164,6 +164,34 @@ app.post("/api/createUser", (req, res) => __awaiter(void 0, void 0, void 0, func
         yield client.close();
     }
 }));
+// DELETE /api/deleteUser/:id
+app.delete("/api/deleteUser/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.id;
+    if (!mongodb_1.ObjectId.isValid(userId)) {
+        return res.status(400).send("ID utente non valido.");
+    }
+    const client = new mongodb_1.MongoClient(CONNECTION_STRING);
+    try {
+        yield client.connect();
+        const collection = client.db(DBNAME).collection("utenti");
+        const result = yield collection.deleteOne({ _id: new mongodb_1.ObjectId(userId) });
+        if (result.deletedCount === 1) {
+            console.log(`Utente con ID ${userId} eliminato con successo.`);
+            return res.status(200).send("Utente eliminato con successo.");
+        }
+        else {
+            console.warn(`Utente con ID ${userId} non trovato.`);
+            return res.status(404).send("Utente non trovato.");
+        }
+    }
+    catch (err) {
+        console.error("Errore durante l'eliminazione dell'utente:", err);
+        return res.status(500).send("Errore interno del server.");
+    }
+    finally {
+        yield client.close();
+    }
+}));
 // GET /api/getPerizie
 app.get("/api/getPerizie", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.query.userId;
@@ -241,6 +269,53 @@ app.post("/api/login", (req, res) => __awaiter(void 0, void 0, void 0, function*
     catch (err) {
         console.error("Errore durante il login:", err);
         return res.status(500).send("Errore interno del server.");
+    }
+    finally {
+        yield client.close();
+    }
+}));
+app.get("/api/getPerizia/:codice_perizia", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const codicePerizia = req.params.codice_perizia;
+    const client = new mongodb_1.MongoClient(CONNECTION_STRING);
+    try {
+        yield client.connect();
+        const collection = client.db(DBNAME).collection("perizie");
+        const perizia = yield collection.findOne({ codice_perizia: codicePerizia });
+        if (!perizia) {
+            return res.status(404).send("Perizia non trovata.");
+        }
+        res.status(200).json(perizia);
+    }
+    catch (err) {
+        console.error("Errore durante il caricamento della perizia:", err);
+        res.status(500).send("Errore interno del server.");
+    }
+    finally {
+        yield client.close();
+    }
+}));
+app.put("/api/updateUser/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.id;
+    const { nome, cognome, email, ruolo } = req.body;
+    if (!nome || !cognome || !email || !ruolo) {
+        return res.status(400).send("Tutti i campi sono obbligatori.");
+    }
+    if (!mongodb_1.ObjectId.isValid(userId)) {
+        return res.status(400).send("ID utente non valido.");
+    }
+    const client = new mongodb_1.MongoClient(CONNECTION_STRING);
+    try {
+        yield client.connect();
+        const collection = client.db(DBNAME).collection("utenti");
+        const result = yield collection.updateOne({ _id: new mongodb_1.ObjectId(userId) }, { $set: { nome, cognome, email, ruolo } });
+        if (result.matchedCount === 0) {
+            return res.status(404).send("Utente non trovato.");
+        }
+        res.status(200).send("Utente aggiornato con successo.");
+    }
+    catch (err) {
+        console.error("Errore durante l'aggiornamento dell'utente:", err);
+        res.status(500).send("Errore interno del server.");
     }
     finally {
         yield client.close();
