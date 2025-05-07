@@ -168,31 +168,63 @@ app.post("/api/createUser", async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/deleteUser/:id
+app.delete("/api/deleteUser/:id", async (req: Request, res: Response) => {
+  const userId = req.params.id;
+
+  if (!ObjectId.isValid(userId)) {
+    return res.status(400).send("ID utente non valido.");
+  }
+
+  const client = new MongoClient(CONNECTION_STRING);
+  try {
+    await client.connect();
+    const collection = client.db(DBNAME).collection("utenti");
+
+    const result = await collection.deleteOne({ _id: new ObjectId(userId) });
+
+    if (result.deletedCount === 1) {
+      console.log(`Utente con ID ${userId} eliminato con successo.`);
+      return res.status(200).send("Utente eliminato con successo.");
+    } else {
+      console.warn(`Utente con ID ${userId} non trovato.`);
+      return res.status(404).send("Utente non trovato.");
+    }
+  } catch (err) {
+    console.error("Errore durante l'eliminazione dell'utente:", err);
+    return res.status(500).send("Errore interno del server.");
+  } finally {
+    await client.close();
+  }
+});
+
+
+
 // GET /api/getPerizie
 app.get("/api/getPerizie", async (req: Request, res: Response) => {
   const userId = req.query.userId as string;
   const client = new MongoClient(CONNECTION_STRING);
 
   try {
-      await client.connect();
-      const collection = client.db(DBNAME).collection("perizie");
+    await client.connect();
+    const collection = client.db(DBNAME).collection("perizie");
 
-      let query = {};
-      if (userId && userId !== "ALL") {
-          if (!ObjectId.isValid(userId)) {
-              return res.status(400).send("ID utente non valido.");
-          }
-          query = { operatore_id: new ObjectId(userId) };
+    let query = {};
+    if (userId && userId !== "ALL") {
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).send("ID utente non valido.");
       }
+      query = { operatore_id: new ObjectId(userId) };
+    }
 
-      const perizie = await collection.find(query).toArray();
-      console.log("Perizie inviate al client:", perizie); // Log per debug
-      res.status(200).json(perizie); 
+    const perizie = await collection.find(query).toArray();
+    console.log("Perizie inviate al client:", perizie); // Log per debug
+    res.status(200).json(perizie);
   } catch (err) {
-      console.error("Errore durante il caricamento delle perizie:", err);
-      res.status(500).send("Errore interno del server.");
+    console.error("Errore durante il caricamento delle perizie:", err);
+    res.status(500).send("Errore interno del server.");
   } finally {
-      await client.close();
+    await client.close();
   }
 });
 
@@ -259,6 +291,61 @@ app.post("/api/login", async (req: Request, res: Response) => {
     await client.close();
   }
 });
+app.get("/api/getPerizia/:codice_perizia", async (req: Request, res: Response) => {
+  const codicePerizia = req.params.codice_perizia;
+  const client = new MongoClient(CONNECTION_STRING);
+
+  try {
+    await client.connect();
+    const collection = client.db(DBNAME).collection("perizie");
+
+    const perizia = await collection.findOne({ codice_perizia: codicePerizia });
+    if (!perizia) {
+      return res.status(404).send("Perizia non trovata.");
+    }
+
+    res.status(200).json(perizia);
+  } catch (err) {
+    console.error("Errore durante il caricamento della perizia:", err);
+    res.status(500).send("Errore interno del server.");
+  } finally {
+    await client.close();
+  }
+});
+app.put("/api/updateUser/:id", async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  const { nome, cognome, email, ruolo } = req.body;
+
+  if (!nome || !cognome || !email || !ruolo) {
+    return res.status(400).send("Tutti i campi sono obbligatori.");
+  }
+
+  if (!ObjectId.isValid(userId)) {
+    return res.status(400).send("ID utente non valido.");
+  }
+
+  const client = new MongoClient(CONNECTION_STRING);
+  try {
+    await client.connect();
+    const collection = client.db(DBNAME).collection("utenti");
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { nome, cognome, email, ruolo } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send("Utente non trovato.");
+    }
+
+    res.status(200).send("Utente aggiornato con successo.");
+  } catch (err) {
+    console.error("Errore durante l'aggiornamento dell'utente:", err);
+    res.status(500).send("Errore interno del server.");
+  } finally {
+    await client.close();
+  }
+});
 
 // PUT /api/updatePerizia/:codice_perizia
 app.put("/api/updatePerizia/:codice_perizia", async (req: Request, res: Response) => {
@@ -282,8 +369,8 @@ app.put("/api/updatePerizia/:codice_perizia", async (req: Request, res: Response
     const updatedFotografie = fotografie.map((foto: { url: string; commento: string }, index: number) => {
       const existingFoto = existingPerizia.fotografie[index];
       return {
-        url: foto.url || (existingFoto ? existingFoto.url : null), 
-        commento: foto.commento || (existingFoto ? existingFoto.commento : ""), 
+        url: foto.url || (existingFoto ? existingFoto.url : null),
+        commento: foto.commento || (existingFoto ? existingFoto.commento : ""),
       };
     });
 
